@@ -7,7 +7,7 @@ import {
 } from 'react-native'
 import React, { useState } from 'react'
 import { Link } from 'expo-router'
-import { createUserWithEmailAndPassword } from 'firebase/auth'
+import { signInWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '@/platform/core/services'
 import { useRouter } from 'expo-router'
 
@@ -16,7 +16,7 @@ type SignupDto = {
   password: string
 }
 
-const RegisterScreen = () => {
+const LoginScreen = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -24,7 +24,7 @@ const RegisterScreen = () => {
 
   async function signup({ email, password }: SignupDto) {
     try {
-      const user = await createUserWithEmailAndPassword(auth, email, password)
+      const user = await signInWithEmailAndPassword(auth, email, password)
 
       router.replace('home')
 
@@ -35,7 +35,7 @@ const RegisterScreen = () => {
     }
   }
 
-  async function handleSignup() {
+  async function handleSignin() {
     setLoading(true)
     console.log('executou')
 
@@ -44,17 +44,21 @@ const RegisterScreen = () => {
     try {
       const user = await signup({ email, password })
     } catch (error) {
-      console.log('HANDLED ERROR handleSignup')
+      console.log('HANDLED ERROR handleSignin')
     } finally {
       setLoading(false)
     }
+  }
+
+  function goToSignup() {
+    router.push('register')
   }
 
   return (
     <View style={styles.wrapper}>
       <View style={styles.formWrapper}>
         <View style={styles.formHeader}>
-          <Text>RegisterScreen</Text>
+          <Text>LoginScreen</Text>
         </View>
 
         <View style={styles.formContent}>
@@ -78,8 +82,11 @@ const RegisterScreen = () => {
         </View>
 
         <View style={styles.formFooter}>
-          <TouchableOpacity style={styles.button} onPress={handleSignup}>
-            <Text style={styles.buttonText}>Criar Conta</Text>
+          <TouchableOpacity style={styles.button} onPress={handleSignin}>
+            <Text style={styles.buttonText}>Login</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={goToSignup}>
+            <Text style={styles.buttonText}>Criar conta</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -87,7 +94,7 @@ const RegisterScreen = () => {
   )
 }
 
-export default RegisterScreen
+export default LoginScreen
 
 const styles = StyleSheet.create({
   wrapper: {
@@ -109,7 +116,9 @@ const styles = StyleSheet.create({
     flex: 1,
     rowGap: 8
   },
-  formFooter: {},
+  formFooter: {
+    marginTop: 50
+  },
   input: {
     borderColor: '#858585a',
     borderWidth: 1,
@@ -117,7 +126,7 @@ const styles = StyleSheet.create({
     borderRadius: 8
   },
   button: {
-    marginTop: 20,
+    marginTop: 10,
     height: 30,
     backgroundColor: 'blue',
     borderRadius: 4,
