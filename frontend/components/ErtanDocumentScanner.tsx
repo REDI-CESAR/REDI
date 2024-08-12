@@ -11,70 +11,108 @@ import Permissions from "react-native-permissions";
 
 import DocumentScanner from "@ertan95/react-native-document-scanner";
 import { useEffect, useRef, useState } from "react";
+import axios from 'axios'
 
 export default function ErtanDocumentScanner() {
-  const pdfScannerElement = useRef<DocumentScanner>(null);
-  const [allowed, setAllowed] = useState(false);
-  const [picture, setPicture] = useState<any>(null);
+  const pdfScannerElement = useRef<DocumentScanner>(null)
+  const [allowed, setAllowed] = useState(false)
+  const [picture, setPicture] = useState<any>(null)
 
   function handleOnPictureTaken(event: any) {
-    console.log("test handleOnPictureTaken", event);
-    setPicture(event);
+    console.log('test handleOnPictureTaken', event)
+    setPicture(event)
+  }
+
+  function handleSendTaken() {
+    const formData = new FormData()
+
+    console.log('picture', picture.croppedImage)
+
+    formData.append('file', {
+      uri: picture.croppedImage, //picture.croppedImage as string, // URI of the file
+      name: 'photo.jpg', // The name of the file
+      type: 'image/jpeg' // The MIME type of the file
+    } as any)
+
+    axios
+      .post(
+        'https://15e4-2804-1b2-2044-8b4d-397f-42a1-7c9-14c.ngrok-free.app/roval-ocr/us-central1/analyzePrescription',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      )
+      .then((resp) => {
+        console.log('resp', resp)
+      })
+      .catch((err) => {
+        console.log('err', err)
+        // console.log('err', JSON.stringify(err))
+      })
   }
 
   function onRectangleDetect(event: any) {
-    console.log("test onRectangleDetect", event);
+    console.log('test onRectangleDetect', event)
   }
 
   function onProcessing(event: any) {
-    console.log("test onProcessing", event, pdfScannerElement.current);
+    console.log('test onProcessing', event, pdfScannerElement.current)
   }
 
   function handleOnPress(event: GestureResponderEvent) {
-    console.log("test handleOnPress");
-    pdfScannerElement.current && pdfScannerElement.current.capture();
+    console.log('test handleOnPress')
+    pdfScannerElement.current && pdfScannerElement.current.capture()
   }
 
   useEffect(() => {
     async function requestCamera() {
       const result = await Permissions.request(
-        Platform.OS === "android"
-          ? "android.permission.CAMERA"
-          : "ios.permission.CAMERA"
-      );
-      if (result === "granted") setAllowed(true);
+        Platform.OS === 'android'
+          ? 'android.permission.CAMERA'
+          : 'ios.permission.CAMERA'
+      )
+      if (result === 'granted') setAllowed(true)
     }
-    requestCamera();
-  }, []);
+    requestCamera()
+  }, [])
 
   return (
     <View
       style={{
         borderWidth: 2,
-        borderStyle: "solid",
-        flex: 1,
+        borderStyle: 'solid',
+        flex: 1
       }}
     >
-      <View style={{ paddingTop: 50, flexDirection: "row", columnGap: 10 }}>
+      <View style={{ paddingTop: 50, flexDirection: 'row', columnGap: 10 }}>
         <TouchableOpacity
-          style={{ height: 50, backgroundColor: "green" }}
+          style={{ height: 50, backgroundColor: 'green' }}
           onPress={handleOnPress}
         >
           <Text>TAKE PICTURE</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={{ height: 50, backgroundColor: "green" }}
+          style={{ height: 50, backgroundColor: 'green' }}
           onPress={() => setPicture(null)}
         >
           <Text>CLEAR PICTURE</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={{ height: 50, backgroundColor: 'green' }}
+          onPress={handleSendTaken}
+        >
+          <Text>SEND PICTURE</Text>
+        </TouchableOpacity>
       </View>
       <View
         style={{
-          borderColor: "red",
+          borderColor: 'red',
           borderWidth: 2,
-          borderStyle: "solid",
-          flex: 1,
+          borderStyle: 'solid',
+          flex: 1
         }}
       >
         {picture ? (
@@ -99,13 +137,13 @@ export default function ErtanDocumentScanner() {
             detectionRefreshRateInMS={50}
             onDeviceSetup={(event) => {
               // set camera resolution width, height in styles.scanner on start up to avoid scanner disortion
-              console.log("onDeviceSetup:", event.height, event.width);
+              console.log('onDeviceSetup:', event.height, event.width)
             }}
           />
         )}
       </View>
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
