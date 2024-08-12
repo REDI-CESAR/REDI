@@ -34,7 +34,7 @@ export default function ErtanDocumentScanner() {
 
     axios
       .post(
-        'https://da91-2804-1b2-2044-8b4d-397f-42a1-7c9-14c.ngrok-free.app/redi-cesar/us-central1/uploadImage',
+        'https://2889-2804-1b2-2044-8b4d-397f-42a1-7c9-14c.ngrok-free.app/redi-cesar-a9458/us-central1/uploadImage',
         formData,
         {
           headers: {

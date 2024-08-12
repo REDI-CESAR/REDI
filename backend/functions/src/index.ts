@@ -4,6 +4,11 @@ import { onRequest } from 'firebase-functions/v2/https'
 
 import admin from 'firebase-admin'
 import { handleUploadFile } from '@/controllers'
+// import {
+//   databaseURL,
+//   projectID,
+//   storageBucket
+// } from 'firebase-functions/params'
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -15,13 +20,13 @@ const firebaseConfig = {
   appId: '1:254335469574:web:598f671c18c1b4a9cfdb87'
 }
 
+admin.initializeApp(firebaseConfig)
+
 // admin.initializeApp({
 //   credential: admin.credential.applicationDefault(),
 //   storageBucket: storageBucket.value(),
 //   databaseURL: databaseURL.value(),
 //   projectId: projectID.value()
 // })
-
-admin.initializeApp(firebaseConfig)
 
 export const uploadImage = onRequest({ cors: true }, handleUploadFile)
