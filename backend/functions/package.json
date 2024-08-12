@@ -1,0 +1,38 @@
+{
+  "name": "redi-cesar",
+  "version": "1.0.0",
+  "scripts": {
+    "lint": "eslint --ext .js,.ts .",
+    "lint:fix": "eslint --fix --ext .js,.ts .",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "main": "dist/index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@google-cloud/firestore": "^7.9.0",
+    "@google-cloud/vision": "^4.3.0",
+    "busboy": "^1.6.0",
+    "firebase": "^10.12.5",
+    "firebase-admin": "^12.3.1",
+    "firebase-functions": "^5.0.1",
+    "module-alias": "^2.2.3"
+  },
+  "devDependencies": {
+    "@types/busboy": "^1.5.4",
+    "@types/module-alias": "^2.0.4",
+    "@types/node": "^22.1.0",
+    "typescript": "^5.5.4"
+  }
+}

@@ -26,8 +26,6 @@ export default function ErtanDocumentScanner() {
   function handleSendTaken() {
     const formData = new FormData()
 
-    console.log('picture', picture.croppedImage)
-
     formData.append('file', {
       uri: picture.croppedImage, //picture.croppedImage as string, // URI of the file
       name: 'photo.jpg', // The name of the file
@@ -36,7 +34,7 @@ export default function ErtanDocumentScanner() {
 
     axios
       .post(
-        'https://15e4-2804-1b2-2044-8b4d-397f-42a1-7c9-14c.ngrok-free.app/roval-ocr/us-central1/analyzePrescription',
+        'https://da91-2804-1b2-2044-8b4d-397f-42a1-7c9-14c.ngrok-free.app/redi-cesar/us-central1/uploadImage',
         formData,
         {
           headers: {
@@ -57,12 +55,9 @@ export default function ErtanDocumentScanner() {
     console.log('test onRectangleDetect', event)
   }
 
-  function onProcessing(event: any) {
-    console.log('test onProcessing', event, pdfScannerElement.current)
-  }
+  function onProcessing(event: any) {}
 
   function handleOnPress(event: GestureResponderEvent) {
-    console.log('test handleOnPress')
     pdfScannerElement.current && pdfScannerElement.current.capture()
   }
 
