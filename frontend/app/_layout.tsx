@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { Text, StyleSheet, View, useColorScheme } from 'react-native'
+import { StatusBar } from 'expo-status-bar'
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
@@ -28,6 +29,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <StatusBar style="dark" />
       <View style={styles.wrapper}>
         {/* <View style={styles.header}>
           <Text style={styles.headerTitle}>REDI - Redação Digital</Text>

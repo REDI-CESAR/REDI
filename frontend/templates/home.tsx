@@ -66,6 +66,7 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   buttonText: {
-    color: '#FFF'
+    color: '#FFF',
+    elevation: 2
   }
 })

@@ -6,25 +6,33 @@ import {
   TouchableOpacity,
   View,
   Image,
-} from "react-native";
-import Permissions from "react-native-permissions";
+  Alert
+} from 'react-native'
+import Permissions from 'react-native-permissions'
 
-import DocumentScanner from "@ertan95/react-native-document-scanner";
-import { useEffect, useRef, useState } from "react";
+import DocumentScanner from '@ertan95/react-native-document-scanner'
+import { useEffect, useRef, useState } from 'react'
 import axios from 'axios'
+import LoadingPictureUploadModal from './LoadingPictureUploadModal'
+import { useRouter } from 'expo-router'
 
 export default function ErtanDocumentScanner() {
   const pdfScannerElement = useRef<DocumentScanner>(null)
   const [allowed, setAllowed] = useState(false)
   const [picture, setPicture] = useState<any>(null)
   const [isScanning, setIsScanning] = useState(false)
+  const [modalVisible, setModalVisible] = useState(false)
+  const router = useRouter()
 
   function handleOnPictureTaken(event: any) {
-    console.log('test handleOnPictureTaken', event)
     setPicture(event)
   }
 
-  function handleSendTaken() {
+  async function handleSendTaken() {
+    setModalVisible(true)
+
+    await new Promise((resolve) => setTimeout(resolve, 6000))
+
     const formData = new FormData()
 
     formData.append('file', {
@@ -34,7 +42,7 @@ export default function ErtanDocumentScanner() {
     } as any)
 
     const baseUrl =
-      'https://7eff-2804-1b2-2044-d3f2-a934-665c-1ab6-394a.ngrok-free.app'
+      'https://5401-2804-1b2-2044-d3f2-9c38-40e0-2e8c-63b0.ngrok-free.app'
 
     axios
       .post(`${baseUrl}/redi-cesar-a9458/us-central1/uploadImage`, formData, {
@@ -43,11 +51,16 @@ export default function ErtanDocumentScanner() {
         }
       })
       .then((resp) => {
-        console.log('resp', resp)
+        router.push({
+          pathname: 'review-picture',
+          params: { image: picture.croppedImage }
+        })
       })
-      .catch((err) => {
-        console.log('err', err)
-        // console.log('err', JSON.stringify(err))
+      .catch((_err) => {
+        Alert.alert('Erro ao enviar foto')
+      })
+      .finally(() => {
+        setModalVisible(false)
       })
   }
 
@@ -87,6 +100,12 @@ export default function ErtanDocumentScanner() {
         flex: 1
       }}
     >
+      {modalVisible && (
+        <LoadingPictureUploadModal
+          onModalClose={() => setModalVisible(false)}
+        />
+      )}
+
       <View
         style={{
           // borderColor: 'red',
@@ -145,7 +164,13 @@ export default function ErtanDocumentScanner() {
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => setIsScanning(true)}
+          onPress={() => {
+            if (!isScanning) {
+              setIsScanning(true)
+            }
+
+            setPicture(null)
+          }}
         >
           <Text style={styles.buttonText}>Digitalizar</Text>
         </TouchableOpacity>
