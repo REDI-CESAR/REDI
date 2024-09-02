@@ -17,6 +17,7 @@ export default function ErtanDocumentScanner() {
   const pdfScannerElement = useRef<DocumentScanner>(null)
   const [allowed, setAllowed] = useState(false)
   const [picture, setPicture] = useState<any>(null)
+  const [isScanning, setIsScanning] = useState(false)
 
   function handleOnPictureTaken(event: any) {
     console.log('test handleOnPictureTaken', event)
@@ -32,16 +33,15 @@ export default function ErtanDocumentScanner() {
       type: 'image/jpeg' // The MIME type of the file
     } as any)
 
+    const baseUrl =
+      'https://7eff-2804-1b2-2044-d3f2-a934-665c-1ab6-394a.ngrok-free.app'
+
     axios
-      .post(
-        'https://2889-2804-1b2-2044-8b4d-397f-42a1-7c9-14c.ngrok-free.app/redi-cesar-a9458/us-central1/uploadImage',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
+      .post(`${baseUrl}/redi-cesar-a9458/us-central1/uploadImage`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
         }
-      )
+      })
       .then((resp) => {
         console.log('resp', resp)
       })
@@ -73,68 +73,91 @@ export default function ErtanDocumentScanner() {
     requestCamera()
   }, [])
 
+  if (!allowed) {
+    return (
+      <View>
+        <Text>Permissão de Camera</Text>
+      </View>
+    )
+  }
+
   return (
     <View
       style={{
-        borderWidth: 2,
-        borderStyle: 'solid',
         flex: 1
       }}
     >
-      <View style={{ paddingTop: 50, flexDirection: 'row', columnGap: 10 }}>
-        <TouchableOpacity
-          style={{ height: 50, backgroundColor: 'green' }}
-          onPress={handleOnPress}
-        >
-          <Text>TAKE PICTURE</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={{ height: 50, backgroundColor: 'green' }}
-          onPress={() => setPicture(null)}
-        >
-          <Text>CLEAR PICTURE</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={{ height: 50, backgroundColor: 'green' }}
-          onPress={handleSendTaken}
-        >
-          <Text>SEND PICTURE</Text>
-        </TouchableOpacity>
-      </View>
       <View
         style={{
-          borderColor: 'red',
+          // borderColor: 'red',
           borderWidth: 2,
           borderStyle: 'solid',
           flex: 1
         }}
       >
-        {picture ? (
-          <Image
-            source={{ uri: picture.croppedImage }}
-            style={styles.preview}
-          />
+        {isScanning ? (
+          picture ? (
+            <Image
+              source={{ uri: picture.croppedImage }}
+              style={styles.preview}
+            />
+          ) : (
+            <DocumentScanner
+              ref={pdfScannerElement}
+              style={styles.scanner}
+              onPictureTaken={handleOnPictureTaken}
+              onRectangleDetect={onRectangleDetect}
+              onProcessing={onProcessing}
+              documentAnimation={true}
+              overlayColor="rgba(#1769aa, 0.2)"
+              enableTorch={false}
+              // manualOnly={true}
+              quality={1}
+              saturation={0}
+              detectionCountBeforeCapture={5}
+              detectionRefreshRateInMS={50}
+              onDeviceSetup={(event) => {
+                // set camera resolution width, height in styles.scanner on start up to avoid scanner disortion
+                console.log('onDeviceSetup:', event.height, event.width)
+              }}
+            />
+          )
         ) : (
-          <DocumentScanner
-            ref={pdfScannerElement}
-            style={styles.scanner}
-            onPictureTaken={handleOnPictureTaken}
-            onRectangleDetect={onRectangleDetect}
-            onProcessing={onProcessing}
-            documentAnimation={true}
-            overlayColor="rgba(255,130,0, 0.2)"
-            enableTorch={false}
-            // manualOnly={true}
-            quality={1}
-            saturation={0}
-            detectionCountBeforeCapture={5}
-            detectionRefreshRateInMS={50}
-            onDeviceSetup={(event) => {
-              // set camera resolution width, height in styles.scanner on start up to avoid scanner disortion
-              console.log('onDeviceSetup:', event.height, event.width)
-            }}
-          />
+          <View style={{ flex: 1 }}>
+            <Image
+              source={require('../assets/images/empty-page.jpeg')}
+              style={styles.preview}
+            />
+          </View>
+        )}
+      </View>
+
+      <View style={{ padding: 20, flexDirection: 'row', columnGap: 10 }}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => {
+            setPicture(null)
+            setIsScanning(false)
+          }}
+        >
+          <Text style={styles.buttonText}>Cancelar</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => setIsScanning(true)}
+        >
+          <Text style={styles.buttonText}>Digitalizar</Text>
+        </TouchableOpacity>
+
+        {/* <TouchableOpacity style={styles.button} onPress={handleOnPress}>
+          <Text>TAKE PICTURE</Text>
+        </TouchableOpacity> */}
+
+        {picture && (
+          <TouchableOpacity style={styles.button} onPress={handleSendTaken}>
+            <Text style={styles.buttonText}>Confirmar Envio</Text>
+          </TouchableOpacity>
         )}
       </View>
     </View>
@@ -143,21 +166,32 @@ export default function ErtanDocumentScanner() {
 
 const styles = StyleSheet.create({
   scanner: {
-    flex: 1,
+    flex: 1
   },
   titleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
   },
   stepContainer: {
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 8
   },
   preview: {
     flex: 1,
-    width: "100%",
-    height: "100%",
-    resizeMode: "contain",
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain'
   },
-});
+  button: {
+    padding: 10,
+    backgroundColor: '#1769aa',
+    borderRadius: 4,
+    cursor: 'pointer',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  buttonText: {
+    color: '#FFF'
+  }
+})

@@ -29,7 +29,13 @@ export const handleUploadFile: Handler = async (request, response) => {
       // const imageBucket = `gs://${cloudFile?.metadata.bucket}/${cloudFile?.metadata.name}`
       // const imageBucket = `gs://${cloudFile?.metadata.bucket}/redacao-vazia.jpeg`
       // const imageBucket = `gs://${cloudFile?.metadata.bucket}/redacao-preenchida.jpeg`
-      const imageBucket = `gs://${cloudFile?.metadata.bucket}/redacao-refael-exemplo.png`
+      // const imageBucket = `gs://${cloudFile?.metadata.bucket}/redacao-refael-exemplo.png`
+
+      // const imageBucket = `gs://${cloudFile?.metadata.bucket}/EXEMPLO_EM_BRANCO.jpeg`
+      // const imageBucket = `gs://${cloudFile?.metadata.bucket}/EXEMPLO_TEXTO_1_LINHA.jpeg`
+      const imageBucket = `gs://${cloudFile?.metadata.bucket}/EXEMPLO_TEXTO_32_LINHAS.jpeg`
+      // const imageBucket = `gs://${cloudFile?.metadata.bucket}/EXMEMPLO_31_LINHAS.jpeg`
+      // const imageBucket = `gs://${cloudFile?.metadata.bucket}/EXMPLO_TEXTO_25_LINHAS.jpeg`
 
       // NOTE: REGEX INICAL (testar) para pegar o conteúdo da redacao
       ///[aá]rea de (.*)\: [\s\S]<?texto_redacao>(.*)[\s\S](caed|nees|brasil)/gi
