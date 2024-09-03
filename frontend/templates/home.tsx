@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 20,
     height: 30,
-    backgroundColor: 'blue',
+    backgroundColor: '#1769aa',
     borderRadius: 4,
     // width: '80%',
     cursor: 'pointer',

@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import LoadingPictureUploadModal from './LoadingPictureUploadModal'
 import { useRouter } from 'expo-router'
+import { ImageOcrResult } from '@/platform/core/models'
 
 export default function ErtanDocumentScanner() {
   const pdfScannerElement = useRef<DocumentScanner>(null)
@@ -51,6 +52,16 @@ export default function ErtanDocumentScanner() {
         }
       })
       .then((resp) => {
+        const imageOcrResult: ImageOcrResult = {
+          image: picture.croppedImage,
+          data: {
+            schoolname: 'Escola Teste',
+            schoolclassname: 'Turma A',
+            studentname: 'Nome do Aluno Teste',
+            questiondescription: 'Qual o tema da redação'
+          }
+        }
+
         router.push({
           pathname: 'review-picture',
           params: { image: picture.croppedImage }
