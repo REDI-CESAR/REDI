@@ -24,9 +24,11 @@
     "@google-cloud/firestore": "^7.9.0",
     "@google-cloud/vision": "^4.3.0",
     "busboy": "^1.6.0",
-    "firebase": "^10.12.5",
+    "firebase": "^10.13.1",
     "firebase-admin": "^12.3.1",
     "firebase-functions": "^5.0.1",
+    "jimp": "^0.22.10",
+    "jsqr": "1.4.0",
     "module-alias": "^2.2.3"
   },
   "devDependencies": {

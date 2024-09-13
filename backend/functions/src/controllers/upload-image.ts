@@ -2,6 +2,8 @@ import { saveFileGoogleCloud, uploadLocalFile } from '@/services'
 import express from 'express'
 import { Request } from 'firebase-functions/v2/https'
 import vision from '@google-cloud/vision'
+import Jimp from 'jimp';
+import jsQR from 'jsqr';
 
 type Handler = (
   request: Request,
@@ -20,6 +22,26 @@ export const handleUploadFile: Handler = async (request, response) => {
     }
 
     const fileInfos = await uploadLocalFile(request)
+
+    for (const uploads of fileInfos.uploads) {
+      const image = await Jimp.read(uploads.filePath);
+
+        // Get the image data
+        const imageData = {
+            data: new Uint8ClampedArray(image.bitmap.data),
+            width: image.bitmap.width,
+            height: image.bitmap.height,
+        };
+
+        // Use jsQR to decode the QR code
+        const decodedQR = jsQR(imageData.data, imageData.width, imageData.height);
+
+        if (!decodedQR) {
+            throw new Error('QR code not found in the image.');
+        }
+
+        console.log('DADOS DO QRCODE:', decodedQR.data);
+    }
 
     const cloudFiles = await saveFileGoogleCloud(fileInfos)
 
