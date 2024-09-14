@@ -32,7 +32,7 @@ export default function ErtanDocumentScanner() {
   async function handleSendTaken() {
     setModalVisible(true)
 
-    await new Promise((resolve) => setTimeout(resolve, 6000))
+    await new Promise((resolve) => setTimeout(resolve, 3000))
 
     const formData = new FormData()
 
@@ -42,8 +42,7 @@ export default function ErtanDocumentScanner() {
       type: 'image/jpeg' // The MIME type of the file
     } as any)
 
-    const baseUrl =
-      'https://5401-2804-1b2-2044-d3f2-9c38-40e0-2e8c-63b0.ngrok-free.app'
+    const baseUrl = 'https://cd1b-143-208-131-81.ngrok-free.app'
 
     axios
       .post(`${baseUrl}/redi-cesar-a9458/us-central1/uploadImage`, formData, {
