@@ -33,6 +33,8 @@ export async function uploadLocalFile(request: any): Promise<FileInfos> {
 
       const fileNameGuid = `${randomUUID()}_${filename}`
 
+      console.log('fileNameGuid', fileNameGuid)
+
       const filePath = path.join(tmpdir, fileNameGuid)
       const writeStream = fs.createWriteStream(filePath)
 
@@ -51,7 +53,10 @@ export async function uploadLocalFile(request: any): Promise<FileInfos> {
           writeStream.end()
         })
         writeStream.on('close', resolve)
-        writeStream.on('error', reject)
+        writeStream.on('error', (err) => {
+          console.log('err', err)
+          reject(err)
+        })
       })
 
       fileWrites.push(promise)
@@ -61,7 +66,7 @@ export async function uploadLocalFile(request: any): Promise<FileInfos> {
       await Promise.all(fileWrites)
 
       for (const file of uploads) {
-        // file.base64 = fs.readFileSync(file.filePath, { encoding: 'base64' })
+        file.base64 = fs.readFileSync(file.filePath, { encoding: 'base64' })
         // fs.unlinkSync(file.filePath);
       }
 

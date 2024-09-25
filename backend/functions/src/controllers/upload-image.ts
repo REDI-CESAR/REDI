@@ -2,7 +2,7 @@ import { saveFileGoogleCloud, uploadLocalFile } from '@/services'
 import express from 'express'
 import { Request } from 'firebase-functions/v2/https'
 import vision from '@google-cloud/vision'
-import langdetect from 'langdetect'
+import { OpenAiService } from '@/infra/gateways/open-ai/openai'
 
 type Handler = (
   request: Request,
@@ -25,6 +25,7 @@ export const handleUploadFile: Handler = async (request, response) => {
     const cloudFiles = await saveFileGoogleCloud(fileInfos)
 
     const client = new vision.ImageAnnotatorClient()
+    const openAiService = new OpenAiService()
 
     let teste = ''
 
@@ -47,26 +48,33 @@ export const handleUploadFile: Handler = async (request, response) => {
 
       teste = result.fullTextAnnotation?.text!
 
-      const textoPorEspaco = teste.split(' ')
+      // const textoPorEspaco = teste.split(' ')
 
-      let rasura = 0
+      // let rasura = 0
 
-      for (const palavra of textoPorEspaco) {
-        const detect = langdetect.detect(palavra)
+      // for (const palavra of textoPorEspaco) {
+      //   const detect = langdetect.detect(palavra)
 
-        const detectItem = detect?.find((d) => d.lang === 'pt')
+      //   const detectItem = detect?.find((d) => d.lang === 'pt')
 
-        if (!detectItem || detectItem.prob < 0.2) {
-          console.log('palavra', palavra)
-          console.log('detect', detect)
-          rasura++
-        }
-      }
-
-      console.log('rasura', rasura)
+      //   if (!detectItem || detectItem.prob < 0.2) {
+      //     console.log('palavra', palavra)
+      //     console.log('detect', detect)
+      //     rasura++
+      //   }
+      // }
     }
 
-    response.send(teste)
+    let scrapingResult: any
+
+    for (const localFile of fileInfos.uploads) {
+      scrapingResult = await openAiService.startCompletions(localFile)
+    }
+
+    response.send({
+      chatGpt: scrapingResult,
+      cloudVision: teste
+    })
   } catch (error) {
     console.log('HENRIQUE', error)
     // logger.error('Error processing receipt', { error });

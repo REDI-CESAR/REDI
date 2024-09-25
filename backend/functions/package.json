@@ -22,8 +22,9 @@
   "description": "",
   "dependencies": {
     "@google-cloud/firestore": "^7.9.0",
-    "@google-cloud/vision": "^4.3.0",
+    "@google-cloud/vision": "^4.3.2",
     "@smodin/fast-text-language-detection": "^0.2.3",
+    "axios": "^1.7.7",
     "busboy": "^1.6.0",
     "firebase": "^10.12.5",
     "firebase-admin": "^12.3.1",
