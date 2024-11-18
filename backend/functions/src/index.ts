@@ -3,7 +3,7 @@ import './config/module-alias'
 import { onRequest } from 'firebase-functions/v2/https'
 
 import admin from 'firebase-admin'
-import { handleUploadFile } from '@/controllers'
+import ImageUploader from './controllers/upload-image'
 // import {
 //   databaseURL,
 //   projectID,
@@ -29,4 +29,5 @@ admin.initializeApp(firebaseConfig)
 //   projectId: projectID.value()
 // })
 
-export const uploadImage = onRequest({ cors: true }, handleUploadFile)
+const imageUploader = new ImageUploader();
+export const uploadImage = onRequest({ cors: true }, imageUploader.handleUploadFile)

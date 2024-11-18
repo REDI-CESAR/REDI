@@ -1,108 +1,171 @@
-import { saveFileGoogleCloud, uploadLocalFile } from '@/services'
-import express from 'express'
+import express, { Response } from 'express'
 import { Request } from 'firebase-functions/v2/https'
 import vision from '@google-cloud/vision'
 import Jimp from 'jimp';
 import jsQR from 'jsqr';
+import { FileInfos } from '@/core/models';
+import { UploadResponse, File as FireStorageFile } from '@google-cloud/storage'
+import { DocumentData, DocumentReference } from 'firebase-admin/firestore';
+import admin from 'firebase-admin'
+import { File } from '@google-cloud/storage';
+import LocalFileUploader from '@/services/upload-file';
 
 type Handler = (
   request: Request,
   response: express.Response
 ) => void | Promise<void>
 
-export const handleUploadFile: Handler = async (request, response) => {
-  try {
-    response.setHeader('Access-Control-Allow-Origin', '*')
+type PromiseFireStore = Promise<DocumentReference<DocumentData>>
 
+class ImageUploader {
+  localFileUploader: LocalFileUploader;
+  constructor () {
+    this.localFileUploader = new LocalFileUploader();
+  }
+
+  async saveFileGoogleCloud(fileInfos: FileInfos): Promise<File[]> {
+    try {
+      // eslint-disable-line no-useless-catch
+      const RECEIPT_COLLECTION = 'arquivos_redacao'
+      const uploadPromises: Promise<UploadResponse>[] = []
+      const receiptsFireStorePromises: PromiseFireStore[] = []
+  
+      fileInfos.uploads.forEach((fileInfo) => {
+        const storagePromise = admin
+          .storage()
+          .bucket()
+          .upload(fileInfo.filePath, {
+            metadata: {
+              contentType: fileInfo.mimeType,
+              ...fileInfo
+            }
+          })
+  
+        uploadPromises.push(storagePromise)
+  
+        const fireStorePromise: PromiseFireStore = admin
+          .firestore()
+          .collection(RECEIPT_COLLECTION)
+          .add(fileInfo)
+  
+        receiptsFireStorePromises.push(fireStorePromise)
+      })
+  
+      const uploadedFiles = await Promise.all(uploadPromises)
+      await Promise.all(receiptsFireStorePromises)
+  
+      return uploadedFiles.map((uploadedFile) => uploadedFile[0])
+    } catch (error) {
+      // TODO: Throw CUSTOM ERROR
+      throw error
+    }
+  }
+
+  private verifyToken (request: Request, response: Response): { message?: string, status: number } {
     const authToken = request.headers.authorization;
-    console.log(authToken)
-    if (authToken === null || authToken === undefined) {
+
+    if (!authToken) {
       response.status(403).send({
         message: 'Token não definido'
       });
-      return;
+      return { message: 'Token não definido', status: 403 };
     }
 
     if (authToken.length === 0) {
       response.status(403).send({
         message: 'Token vazio'
       });
-      return;
+      return { message: 'Token vazio', status: 403 };
     }
 
-    if (request.method === 'OPTIONS') {
-      response.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+    return { status: 200 };
+  }
 
-      response.send('')
-      return
-    }
-
-    const fileInfos = await uploadLocalFile(request)
-
-    for (const uploads of fileInfos.uploads) {
-      const image = await Jimp.read(uploads.filePath);
-
-        // Get the image data
+  async handleUploadFile(request: Request, response: Response) {
+    try {
+      response.setHeader('Access-Control-Allow-Origin', '*')
+  
+      const { status, message } = this.verifyToken(request, response);
+      if (status !== 200) {
+        response.status(status).send({
+          message
+        })
+        return;
+      }
+  
+      if (request.method === 'OPTIONS') {
+        response.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  
+        response.send('')
+        return
+      }
+  
+      const fileInfos: FileInfos = await this.localFileUploader.uploadLocalFile(request)
+      let qrcodeInfo: string = '';
+  
+      for (const uploads of fileInfos.uploads) {
+        const image: any = await Jimp.read(uploads.filePath);
+  
         const imageData = {
             data: new Uint8ClampedArray(image.bitmap.data),
             width: image.bitmap.width,
             height: image.bitmap.height,
         };
 
-        // Use jsQR to decode the QR code
         const decodedQR = jsQR(imageData.data, imageData.width, imageData.height);
 
         if (!decodedQR) {
           response.status(400).send({
             message: 'QRCode não encontrado'
           })
-          return
+          return;
         }
 
-        console.log('DADOS DO QRCODE:', decodedQR.data);
-    }
-
-    const cloudFiles = await saveFileGoogleCloud(fileInfos)
-
-    const client = new vision.ImageAnnotatorClient()
-
-    for (const cloudFile of cloudFiles) {
-      const imageBucket = `gs://${cloudFile?.metadata.bucket}/${cloudFile?.metadata.name}`
-      // const imageBucket = `gs://${cloudFile?.metadata.bucket}/redacao-vazia.jpeg`
-      // const imageBucket = `gs://${cloudFile?.metadata.bucket}/redacao-preenchida.jpeg`
-      // const imageBucket = `gs://${cloudFile?.metadata.bucket}/redacao-refael-exemplo.png`
-
-      // NOTE: REGEX INICAL (testar) para pegar o conteúdo da redacao
-      ///[aá]rea de (.*)\: [\s\S]<?texto_redacao>(.*)[\s\S](caed|nees|brasil)/gi
-
-      const [result] = await client.textDetection(imageBucket)
-
-      console.log('result', result.fullTextAnnotation?.text)
-      const text = result.fullTextAnnotation?.text;
-      if (text?.length === 0 || text === undefined) {
-        response.status(400).send({
-          message: 'Redação vazia'
-        });
+        qrcodeInfo = decodedQR.data;
       }
-
-      const lines = text?.split('\n');
-      console.log(lines?.length)
-      if (lines?.length! < 5) {
-        response.status(400).send({
-          message: 'Redação com menos de 5 linhas'
-        });
-      } else if (lines?.length! > 35) {
-        response.status(400).send({
-          message: 'Redação com mais de 35 linhas'
-        });
+  
+      const cloudFiles = await this.saveFileGoogleCloud(fileInfos);
+  
+      const client = new vision.ImageAnnotatorClient()
+  
+      for (const cloudFile of cloudFiles) {
+        const imageBucket = `gs://${cloudFile?.metadata.bucket}/${cloudFile?.metadata.name}`
+        // const imageBucket = `gs://${cloudFile?.metadata.bucket}/redacao-vazia.jpeg`
+        // const imageBucket = `gs://${cloudFile?.metadata.bucket}/redacao-preenchida.jpeg`
+        // const imageBucket = `gs://${cloudFile?.metadata.bucket}/redacao-refael-exemplo.png`
+  
+        // NOTE: REGEX INICAL (testar) para pegar o conteúdo da redacao
+        ///[aá]rea de (.*)\: [\s\S]<?texto_redacao>(.*)[\s\S](caed|nees|brasil)/gi
+  
+        const [result] = await client.textDetection(imageBucket)
+  
+        const text = result.fullTextAnnotation?.text;
+        if (text?.length === 0 || text === undefined) {
+          response.status(400).send({
+            message: 'Redação vazia'
+          });
+        }
+  
+        const lines = text?.split('\n');
+        if (lines?.length! < 5) {
+          response.status(400).send({
+            message: 'Redação com menos de 5 linhas'
+          });
+        } else if (lines?.length! > 35) {
+          response.status(400).send({
+            message: 'Redação com mais de 35 linhas'
+          });
+        }
       }
+  
+      response.send({
+        files: cloudFiles,
+        qrcodeInfo
+      })
+    } catch (error) {
+      response.status(500).send('Falha ao ler a redação');
     }
-
-    response.send(cloudFiles)
-  } catch (error) {
-    console.log('HENRIQUE', error)
-    // logger.error('Error processing receipt', { error });
-
-    response.status(500).send('Failed to process receipt')
   }
 }
+
+export default ImageUploader;
