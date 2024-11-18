@@ -42,7 +42,8 @@ export default function ErtanDocumentScanner() {
       type: 'image/jpeg' // The MIME type of the file
     } as any)
 
-    const baseUrl = 'https://cd1b-143-208-131-81.ngrok-free.app'
+    const baseUrl =
+      'https://6242-2804-1b2-2044-c6f5-141b-7e38-e229-6715.ngrok-free.app'
 
     axios
       .post(`${baseUrl}/redi-cesar-a9458/us-central1/uploadImage`, formData, {

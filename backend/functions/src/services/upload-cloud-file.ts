@@ -16,13 +16,17 @@ export const saveFileGoogleCloud: Setup = async (fileInfos) => {
     const receiptsFireStorePromises: PromiseFireStore[] = []
 
     fileInfos.uploads.forEach((fileInfo) => {
+      const cloneFile = structuredClone(fileInfo)
+
+      delete cloneFile.base64
+
       const storagePromise = admin
         .storage()
         .bucket()
         .upload(fileInfo.filePath, {
           metadata: {
             contentType: fileInfo.mimeType,
-            ...fileInfo
+            ...cloneFile
           }
         })
 
@@ -31,7 +35,7 @@ export const saveFileGoogleCloud: Setup = async (fileInfos) => {
       const fireStorePromise: PromiseFireStore = admin
         .firestore()
         .collection(RECEIPT_COLLECTION)
-        .add(fileInfo)
+        .add(cloneFile)
 
       receiptsFireStorePromises.push(fireStorePromise)
     })
