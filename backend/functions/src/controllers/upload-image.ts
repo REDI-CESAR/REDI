@@ -9,6 +9,7 @@ import { DocumentData, DocumentReference } from 'firebase-admin/firestore';
 import admin from 'firebase-admin'
 import { File } from '@google-cloud/storage';
 import LocalFileUploader from '@/services/upload-file';
+import { getAuth } from 'firebase-admin/auth';
 
 type Handler = (
   request: Request,
@@ -19,8 +20,11 @@ type PromiseFireStore = Promise<DocumentReference<DocumentData>>
 
 class ImageUploader {
   localFileUploader: LocalFileUploader;
+  userToken: string;
+
   constructor () {
     this.localFileUploader = new LocalFileUploader();
+    this.userToken = "";
   }
 
   async saveFileGoogleCloud(fileInfos: FileInfos): Promise<File[]> {
@@ -62,16 +66,35 @@ class ImageUploader {
   }
 
   private verifyToken (request: Request, response: Response): { message?: string, status: number } {
-    const authToken = request.headers.authorization;
-
-    if (!authToken) {
+    if (!request.headers.authorization) {
       response.status(403).send({
         message: 'Token não definido'
       });
       return { message: 'Token não definido', status: 403 };
     }
 
-    if (authToken.length === 0) {
+    this.userToken = request.headers.authorization!;
+    const userRecord = getAuth()
+      .verifyIdToken(this.userToken, true)
+      .then(() => {
+        return getAuth().getUser(request.body)
+      })
+      .catch(() => {
+        return null;
+      })
+
+    if (userRecord === null) {
+      return { message: 'Token expirado', status: 401 }
+    }
+
+    if (!this.userToken) {
+      response.status(403).send({
+        message: 'Token não definido'
+      });
+      return { message: 'Token não definido', status: 403 };
+    }
+
+    if (this.userToken.length === 0) {
       response.status(403).send({
         message: 'Token vazio'
       });
