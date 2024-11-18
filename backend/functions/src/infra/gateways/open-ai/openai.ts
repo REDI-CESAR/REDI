@@ -1,6 +1,3 @@
-import fs from 'fs'
-import FormData from 'form-data'
-
 import { axiosClient } from '@/infra/gateways/axios-client'
 import { LocalFile } from '@/core/models'
 import { promptGpt } from '@/utils/chat-gpt-prompt'

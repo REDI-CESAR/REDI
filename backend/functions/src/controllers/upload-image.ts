@@ -46,7 +46,9 @@ export const handleUploadFile: Handler = async (request, response) => {
 
       const [result] = await client.textDetection(imageBucket)
 
-      teste = result.fullTextAnnotation?.text!
+      if (result.fullTextAnnotation?.text) {
+        teste = result.fullTextAnnotation?.text
+      }
 
       // const textoPorEspaco = teste.split(' ')
 

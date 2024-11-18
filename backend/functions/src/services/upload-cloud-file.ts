@@ -9,8 +9,8 @@ type PromiseFireStore = Promise<DocumentReference<DocumentData>>
 type Setup = (input: FileInfos) => Promise<FireStorageFile[]>
 
 export const saveFileGoogleCloud: Setup = async (fileInfos) => {
+  // eslint-disable-next-line no-useless-catch
   try {
-    // eslint-disable-line no-useless-catch
     const RECEIPT_COLLECTION = 'arquivos_redacao'
     const uploadPromises: Promise<UploadResponse>[] = []
     const receiptsFireStorePromises: PromiseFireStore[] = []
