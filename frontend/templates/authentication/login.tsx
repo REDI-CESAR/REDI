@@ -8,10 +8,12 @@ import {
   Alert
 } from 'react-native'
 import React, { useState } from 'react'
-import { Link } from 'expo-router'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '@/platform/core/services'
 import { useRouter } from 'expo-router'
+import { EmailValidator } from '@/utils/email-validator'
+import { FirebaseError } from 'firebase/app'
+import { PasswordValidator } from '@/utils/password-validator'
 
 type SignupDto = {
   email: string
@@ -24,20 +26,46 @@ const LoginScreen = () => {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
+  function handleForgotPassword() {
+    router.push('forgotpassword')
+  }
+
   async function handleSignin() {
     setLoading(true)
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 5000))
+      if (!EmailValidator.isValid(email)) {
+        Alert.alert('Email inválido')
+        return
+      }
+
+      const passwordValidations = PasswordValidator.isValid(password)
+      if (!passwordValidations.isValid) {
+        Alert.alert(passwordValidations.messages[0])
+        return
+      }
 
       const user = await signInWithEmailAndPassword(auth, email, password)
 
       router.replace('home')
 
       console.log('RESPONSE USER FIREBASE', user)
-    } catch (error) {
-      console.log('error signup firebase', error)
-      Alert.alert('Error ao logar')
+    } catch (error: unknown) {
+      if (error instanceof FirebaseError) {
+        const errorFirebase = error as FirebaseError
+
+        enum FirebaseErrorCode {
+          invalidCredentials = 'auth/invalid-login-credentials',
+          invalidEmail = 'auth/invalid-email'
+        }
+
+        if (errorFirebase.code === FirebaseErrorCode.invalidCredentials) {
+          Alert.alert('Credenciais inválidas')
+          return
+        }
+      }
+
+      Alert.alert('Falha ao realizar login')
       throw error
     } finally {
       setLoading(false)
@@ -90,7 +118,10 @@ const LoginScreen = () => {
           </View>
 
           <View style={styles.forgotPassowordWrapper}>
-            <TouchableOpacity style={styles.forgotPassowordButton}>
+            <TouchableOpacity
+              style={styles.forgotPassowordButton}
+              onPress={handleForgotPassword}
+            >
               <Text style={styles.forgotPassowordLink}>
                 Esqueci minha senha
               </Text>
@@ -151,6 +182,7 @@ const styles = StyleSheet.create({
     fontSize: 12
   },
   input: {
+    height: 50,
     borderColor: '#858585a',
     borderWidth: 1,
     borderRadius: 8,
@@ -158,8 +190,8 @@ const styles = StyleSheet.create({
     paddingVertical: 4
   },
   button: {
-    marginTop: 10,
-    height: 30,
+    marginTop: 15,
+    height: 50,
     backgroundColor: '#1769aa',
     borderRadius: 4,
     // width: '80%',

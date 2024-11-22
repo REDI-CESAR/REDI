@@ -4,44 +4,29 @@ import {
   TouchableOpacity,
   StyleSheet,
   TextInput,
-  Alert,
-  ActivityIndicator
+  Alert
 } from 'react-native'
 import React, { useState } from 'react'
-import { Link } from 'expo-router'
-import { createUserWithEmailAndPassword } from 'firebase/auth'
+import { sendPasswordResetEmail } from 'firebase/auth'
 import { auth } from '@/platform/core/services'
 import { useRouter } from 'expo-router'
 import { EmailValidator } from '@/utils/email-validator'
-import { PasswordValidator } from '@/utils/password-validator'
 
-type SignupDto = {
-  email: string
-  password: string
-}
-
-const RegisterScreen = () => {
+const ForgotPasswordScreen = () => {
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  async function signup({ email, password }: SignupDto) {
+  async function forgotPassword(email: string) {
     try {
       if (!EmailValidator.isValid(email)) {
         Alert.alert('Email inválido')
         return
       }
 
-      const passwordValidations = PasswordValidator.isValid(password)
-      if (!passwordValidations.isValid) {
-        Alert.alert(passwordValidations.messages[0])
-        return
-      }
+      const user = await sendPasswordResetEmail(auth, email)
 
-      const user = await createUserWithEmailAndPassword(auth, email, password)
-
-      router.replace('home')
+      router.replace('/(tabs)')
 
       console.log('RESPONSE USER FIREBASE', user)
     } catch (error) {
@@ -49,39 +34,23 @@ const RegisterScreen = () => {
     }
   }
 
-  async function handleSignup() {
+  async function handleForgotpassword() {
     setLoading(true)
 
-    // await new Promise((resolve) => setTimeout(resolve, 5000))
-
     try {
-      const user = await signup({ email, password })
+      const user = await forgotPassword(email)
     } catch (error) {
-      console.log('HANDLED ERROR handleSignup')
-      Alert.alert('Credenciais inválidas')
+      Alert.alert('Não foi possível resetar a senha')
     } finally {
       setLoading(false)
     }
-  }
-
-  if (loading) {
-    return (
-      <View style={styles.loadingWrapper}>
-        <ActivityIndicator
-          style={{ flex: 1 }}
-          size="large"
-          color="#2196f3"
-          animating={loading}
-        />
-      </View>
-    )
   }
 
   return (
     <View style={styles.wrapper}>
       <View style={styles.formWrapper}>
         <View style={styles.formHeader}>
-          <Text>RegisterScreen</Text>
+          <Text>ForgotPassword</Text>
         </View>
 
         <View style={styles.formContent}>
@@ -93,20 +62,14 @@ const RegisterScreen = () => {
             value={email}
             onChangeText={setEmail}
           />
-
-          <TextInput
-            style={styles.input}
-            placeholder="password"
-            secureTextEntry
-            autoCapitalize="none"
-            value={password}
-            onChangeText={setPassword}
-          />
         </View>
 
         <View style={styles.formFooter}>
-          <TouchableOpacity style={styles.button} onPress={handleSignup}>
-            <Text style={styles.buttonText}>Criar Conta</Text>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleForgotpassword}
+          >
+            <Text style={styles.buttonText}>Resetar senha</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -114,14 +77,13 @@ const RegisterScreen = () => {
   )
 }
 
-export default RegisterScreen
+export default ForgotPasswordScreen
 
 const styles = StyleSheet.create({
-  loadingWrapper: {
-    flex: 1
-  },
   wrapper: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingTop: 24,
     paddingHorizontal: 24
   },

@@ -1,9 +1,25 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native'
 import React from 'react'
 import { useRouter } from 'expo-router'
+import { signOut } from 'firebase/auth'
+import { auth } from '@/platform/core/services'
 
 const HomeScreen = () => {
   const router = useRouter()
+
+  async function handleSignOut() {
+    try {
+      const result = await signOut(auth)
+
+      console.log('result LOGOUT', result)
+
+      router.push('/(tabs)')
+    } catch (error) {
+      console.log('error LOGOUT', error)
+
+      Alert.alert('Error ao deslogar')
+    }
+  }
 
   return (
     <View style={styles.wrapper}>
@@ -11,16 +27,16 @@ const HomeScreen = () => {
         <Text>HEADER</Text>
       </View>
       <View style={styles.content}>
-        <Text>AQUI COLOCAREMOS BOTÃO COMO SE FOSSE MENU?</Text>
-        <Text>Podemos Usar Stack, Drawer ou Tabs navigation</Text>
-        <Text>Vou jogar o botão para tela do scanner</Text>
-
         <View style={styles.buttonWrapper}>
           <TouchableOpacity
             style={styles.button}
             onPress={() => router.push('scanner')}
           >
             <Text style={styles.buttonText}>Scanner</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.button} onPress={handleSignOut}>
+            <Text style={styles.buttonText}>Sair</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -37,12 +53,13 @@ const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
     paddingTop: 24,
     paddingHorizontal: 24,
     rowGap: 16
   },
-  header: {},
+  header: {
+    alignSelf: 'center'
+  },
   content: {
     flex: 1,
     rowGap: 8
@@ -57,7 +74,7 @@ const styles = StyleSheet.create({
   buttonWrapper: {},
   button: {
     marginTop: 20,
-    height: 30,
+    height: 50,
     backgroundColor: '#1769aa',
     borderRadius: 4,
     // width: '80%',
