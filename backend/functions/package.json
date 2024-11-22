@@ -26,10 +26,12 @@
     "@smodin/fast-text-language-detection": "^0.2.3",
     "axios": "^1.7.7",
     "busboy": "^1.6.0",
-    "firebase": "^10.12.5",
+    "firebase": "^10.13.1",
     "firebase-admin": "^12.3.1",
     "firebase-functions": "^5.0.1",
     "langdetect": "^0.2.1",
+    "jimp": "^0.22.10",
+    "jsqr": "1.4.0",
     "module-alias": "^2.2.3"
   },
   "devDependencies": {
