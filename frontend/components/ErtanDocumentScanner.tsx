@@ -32,8 +32,6 @@ export default function ErtanDocumentScanner() {
   async function handleSendTaken() {
     setModalVisible(true)
 
-    await new Promise((resolve) => setTimeout(resolve, 3000))
-
     const formData = new FormData()
 
     formData.append('file', {
@@ -42,7 +40,8 @@ export default function ErtanDocumentScanner() {
       type: 'image/jpeg' // The MIME type of the file
     } as any)
 
-    const baseUrl = 'https://uploadimage-fotwrl53aa-uc.a.run.app'
+    const baseUrl =
+      'https://677f-200-133-64-130.ngrok-free.app/redi-cesar-a9458/us-central1/uploadImage'
 
     axios
       .post(baseUrl, formData, {
@@ -51,23 +50,23 @@ export default function ErtanDocumentScanner() {
         }
       })
       .then((resp) => {
-        const imageOcrResult: ImageOcrResult = {
-          image: picture.croppedImage,
-          data: {
-            schoolname: 'Escola Teste',
-            schoolclassname: 'Turma A',
-            studentname: 'Nome do Aluno Teste',
-            questiondescription: 'Qual o tema da redação'
-          }
+        console.log('resp', resp.data)
+        const qrcodeData = resp.data.qrcodeInfo
+        const data = {
+          school: qrcodeData.school,
+          question: qrcodeData.question,
+          student: qrcodeData.student
         }
 
         router.push({
           pathname: 'review-picture',
-          params: { image: picture.croppedImage }
+          params: { image: picture.croppedImage, ...data }
         })
       })
-      .catch((_err) => {
-        Alert.alert('Erro ao enviar foto')
+      .catch((err) => {
+        const errorMessage =
+          err.response.data.message ?? 'Erro ao analisar imagem'
+        Alert.alert(errorMessage)
       })
       .finally(() => {
         setModalVisible(false)

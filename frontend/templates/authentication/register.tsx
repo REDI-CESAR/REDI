@@ -42,9 +42,8 @@ const RegisterScreen = () => {
       const user = await createUserWithEmailAndPassword(auth, email, password)
 
       router.replace('home')
-
-      console.log('RESPONSE USER FIREBASE', user)
     } catch (error) {
+      console.log('error', error)
       throw error
     }
   }

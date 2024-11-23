@@ -29,5 +29,8 @@ admin.initializeApp(firebaseConfig)
 //   projectId: projectID.value()
 // })
 
-const imageUploader = new ImageUploader();
-export const uploadImage = onRequest({ cors: true }, imageUploader.handleUploadFile)
+const imageUploader = new ImageUploader()
+export const uploadImage = onRequest(
+  { cors: true },
+  imageUploader.handleUploadFile.bind(imageUploader)
+)

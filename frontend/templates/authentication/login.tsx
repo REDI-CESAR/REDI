@@ -39,11 +39,16 @@ const LoginScreen = () => {
         return
       }
 
-      const passwordValidations = PasswordValidator.isValid(password)
-      if (!passwordValidations.isValid) {
-        Alert.alert(passwordValidations.messages[0])
+      if (!password) {
+        Alert.alert('Digite uma senha')
         return
       }
+
+      // const passwordValidations = PasswordValidator.isValid(password)
+      // if (!passwordValidations.isValid) {
+      //   Alert.alert(passwordValidations.messages[0])
+      //   return
+      // }
 
       const user = await signInWithEmailAndPassword(auth, email, password)
 

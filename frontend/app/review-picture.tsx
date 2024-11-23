@@ -16,20 +16,20 @@ const Reviewpicture = () => {
   const router = useRouter()
   const [modalVisible, setModalVisible] = useState(false)
 
-  const imageOcrResult: ImageOcrResult = {
+  const imageOcrResult = {
     image: params.image,
     data: {
-      schoolname: 'Escola Teste',
+      schoolname: params.school,
       schoolclassname: 'Turma A',
-      studentname: 'Nome do Aluno Teste',
-      questiondescription: 'Qual o tema da redação'
+      studentname: params.student,
+      questiondescription: params.question
     }
   }
 
   async function handleConfirmSendPicture() {
     setModalVisible(true)
 
-    await new Promise((resolve) => setTimeout(resolve, 3000))
+    // await new Promise((resolve) => setTimeout(resolve, 3000))
 
     setModalVisible(false)
 
@@ -62,7 +62,7 @@ const Reviewpicture = () => {
             />
           </View>
 
-          <View style={styles.label}>
+          {/* <View style={styles.label}>
             <Text>Turma:</Text>
             <TextInput
               editable={false}
@@ -72,7 +72,7 @@ const Reviewpicture = () => {
               autoCapitalize="none"
               value={imageOcrResult.data.schoolclassname}
             />
-          </View>
+          </View> */}
 
           <View style={styles.label}>
             <Text>Nome:</Text>
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 10,
-    height: 30,
+    height: 50,
     backgroundColor: '#1769aa',
     borderRadius: 4,
     cursor: 'pointer',
