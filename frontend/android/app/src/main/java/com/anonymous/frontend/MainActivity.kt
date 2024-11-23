@@ -1,4 +1,4 @@
-package com.anonymous.frontend
+package com.anonymous.redimobile
 
 import android.os.Build
 import android.os.Bundle

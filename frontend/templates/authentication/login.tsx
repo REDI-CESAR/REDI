@@ -3,13 +3,18 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  TextInput
+  TextInput,
+  ActivityIndicator,
+  Alert
 } from 'react-native'
 import React, { useState } from 'react'
-import { Link } from 'expo-router'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '@/platform/core/services'
 import { useRouter } from 'expo-router'
+import { EmailValidator } from '@/utils/email-validator'
+import { FirebaseError } from 'firebase/app'
+import { PasswordValidator } from '@/utils/password-validator'
+import { FirebaseErrorCode } from '@/utils/firebase-error'
 
 type SignupDto = {
   email: string
@@ -22,29 +27,47 @@ const LoginScreen = () => {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  async function signup({ email, password }: SignupDto) {
+  function handleForgotPassword() {
+    router.push('forgotpassword')
+  }
+
+  async function handleSignin() {
+    setLoading(true)
+
     try {
+      if (!EmailValidator.isValid(email)) {
+        Alert.alert('Email inválido')
+        return
+      }
+
+      if (!password) {
+        Alert.alert('Digite uma senha')
+        return
+      }
+
+      // const passwordValidations = PasswordValidator.isValid(password)
+      // if (!passwordValidations.isValid) {
+      //   Alert.alert(passwordValidations.messages[0])
+      //   return
+      // }
+
       const user = await signInWithEmailAndPassword(auth, email, password)
 
       router.replace('home')
 
       console.log('RESPONSE USER FIREBASE', user)
-    } catch (error) {
-      console.log('error signup firebase', error)
+    } catch (error: unknown) {
+      if (error instanceof FirebaseError) {
+        const errorFirebase = error as FirebaseError
+
+        if (errorFirebase.code === FirebaseErrorCode.invalidCredentials) {
+          Alert.alert('Credenciais inválidas')
+          return
+        }
+      }
+
+      Alert.alert('Falha ao realizar login')
       throw error
-    }
-  }
-
-  async function handleSignin() {
-    setLoading(true)
-    console.log('executou')
-
-    await new Promise((resolve) => setTimeout(resolve, 5000))
-
-    try {
-      const user = await signup({ email, password })
-    } catch (error) {
-      console.log('HANDLED ERROR handleSignin')
     } finally {
       setLoading(false)
     }
@@ -54,41 +77,67 @@ const LoginScreen = () => {
     router.push('register')
   }
 
+  if (loading) {
+    return (
+      <View style={styles.loadingWrapper}>
+        <ActivityIndicator
+          style={{ flex: 1 }}
+          size="large"
+          color="#2196f3"
+          animating={loading}
+        />
+      </View>
+    )
+  }
+
   return (
     <View style={styles.wrapper}>
       <View style={styles.formWrapper}>
-        <View style={styles.formHeader}>
-          <Text>LoginScreen</Text>
-        </View>
-
         <View style={styles.formContent}>
-          <TextInput
-            style={styles.input}
-            placeholder="email"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-          />
+          <View style={styles.inputWrapper}>
+            <Text style={styles.inputText}>E-mail</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Digite seu email"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={email}
+              onChangeText={setEmail}
+            />
+          </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="password"
-            secureTextEntry
-            autoCapitalize="none"
-            value={password}
-            onChangeText={setPassword}
-          />
-        </View>
+          <View style={styles.inputWrapper}>
+            <Text style={styles.inputText}>Senha</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Digite sua senha"
+              secureTextEntry
+              autoCapitalize="none"
+              value={password}
+              onChangeText={setPassword}
+            />
+          </View>
 
-        <View style={styles.formFooter}>
-          <TouchableOpacity style={styles.button} onPress={handleSignin}>
-            <Text style={styles.buttonText}>Login</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={goToSignup}>
-            <Text style={styles.buttonText}>Criar conta</Text>
-          </TouchableOpacity>
+          <View style={styles.forgotPassowordWrapper}>
+            <TouchableOpacity
+              style={styles.forgotPassowordButton}
+              onPress={handleForgotPassword}
+            >
+              <Text style={styles.forgotPassowordLink}>
+                Esqueci minha senha
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
+      </View>
+
+      <View style={styles.formFooter}>
+        <TouchableOpacity style={styles.button} onPress={handleSignin}>
+          <Text style={styles.buttonText}>Login</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={goToSignup}>
+          <Text style={styles.buttonText}>Criar conta</Text>
+        </TouchableOpacity>
       </View>
     </View>
   )
@@ -97,44 +146,63 @@ const LoginScreen = () => {
 export default LoginScreen
 
 const styles = StyleSheet.create({
+  loadingWrapper: {
+    flex: 1
+  },
   wrapper: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 24,
+    paddingVertical: 24,
     paddingHorizontal: 24
   },
   formWrapper: {
     minHeight: 200,
     width: '100%',
     marginHorizontal: 'auto',
-    rowGap: 5
-    // alignItems: 'center'
-  },
-  formHeader: {},
-  formContent: {
+    rowGap: 5,
     flex: 1,
+    justifyContent: 'center'
+  },
+  formHeader: {
+    paddingVertical: 10,
+    alignItems: 'center'
+  },
+  headerTitle: {
+    color: '#2196f3',
+    fontSize: 24
+  },
+  formContent: {
     rowGap: 8
   },
   formFooter: {
     marginTop: 50
   },
+  inputWrapper: {
+    rowGap: 4
+  },
+  inputText: {
+    fontSize: 12
+  },
   input: {
+    height: 50,
     borderColor: '#858585a',
     borderWidth: 1,
-    height: 30,
-    borderRadius: 8
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4
   },
   button: {
-    marginTop: 10,
-    height: 30,
-    backgroundColor: 'blue',
+    marginTop: 15,
+    height: 50,
+    backgroundColor: '#1769aa',
     borderRadius: 4,
     // width: '80%',
     cursor: 'pointer',
     justifyContent: 'center',
     alignItems: 'center'
   },
+  forgotPassowordWrapper: {},
+  forgotPassowordButton: {},
+  forgotPassowordLink: {},
   buttonText: {
     color: '#FFF'
   }

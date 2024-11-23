@@ -3,13 +3,19 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  TextInput
+  TextInput,
+  Alert,
+  ActivityIndicator
 } from 'react-native'
 import React, { useState } from 'react'
 import { Link } from 'expo-router'
 import { createUserWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '@/platform/core/services'
 import { useRouter } from 'expo-router'
+import { EmailValidator } from '@/utils/email-validator'
+import { PasswordValidator } from '@/utils/password-validator'
+import { FirebaseError } from 'firebase/app'
+import { FirebaseErrorCode } from '@/utils/firebase-error'
 
 type SignupDto = {
   email: string
@@ -24,30 +30,60 @@ const RegisterScreen = () => {
 
   async function signup({ email, password }: SignupDto) {
     try {
-      const user = await createUserWithEmailAndPassword(auth, email, password)
+      if (!EmailValidator.isValid(email)) {
+        Alert.alert('Email inválido')
+        return
+      }
+
+      const passwordValidations = PasswordValidator.isValid(password)
+      if (!passwordValidations.isValid) {
+        Alert.alert(passwordValidations.messages[0])
+        return
+      }
+
+      await createUserWithEmailAndPassword(auth, email, password)
 
       router.replace('home')
-
-      console.log('RESPONSE USER FIREBASE', user)
     } catch (error) {
-      console.log('error signup firebase', error)
-      throw error
+      if (error instanceof FirebaseError) {
+        const errorFirebase = error as FirebaseError
+
+        if (errorFirebase.code === FirebaseErrorCode.emailInUse) {
+          Alert.alert('Email existente')
+          return
+        }
+      }
+
+      Alert.alert('Falha ao registrar usuário')
     }
   }
 
   async function handleSignup() {
     setLoading(true)
-    console.log('executou')
 
-    await new Promise((resolve) => setTimeout(resolve, 5000))
+    // await new Promise((resolve) => setTimeout(resolve, 5000))
 
     try {
       const user = await signup({ email, password })
     } catch (error) {
       console.log('HANDLED ERROR handleSignup')
+      Alert.alert('Credenciais inválidas')
     } finally {
       setLoading(false)
     }
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.loadingWrapper}>
+        <ActivityIndicator
+          style={{ flex: 1 }}
+          size="large"
+          color="#2196f3"
+          animating={loading}
+        />
+      </View>
+    )
   }
 
   return (
@@ -90,10 +126,11 @@ const RegisterScreen = () => {
 export default RegisterScreen
 
 const styles = StyleSheet.create({
+  loadingWrapper: {
+    flex: 1
+  },
   wrapper: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     paddingTop: 24,
     paddingHorizontal: 24
   },
@@ -111,15 +148,17 @@ const styles = StyleSheet.create({
   },
   formFooter: {},
   input: {
+    height: 50,
     borderColor: '#858585a',
     borderWidth: 1,
-    height: 30,
-    borderRadius: 8
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4
   },
   button: {
-    marginTop: 20,
-    height: 30,
-    backgroundColor: 'blue',
+    marginTop: 15,
+    height: 50,
+    backgroundColor: '#1769aa',
     borderRadius: 4,
     // width: '80%',
     cursor: 'pointer',

@@ -9,20 +9,24 @@ type PromiseFireStore = Promise<DocumentReference<DocumentData>>
 type Setup = (input: FileInfos) => Promise<FireStorageFile[]>
 
 export const saveFileGoogleCloud: Setup = async (fileInfos) => {
+  // eslint-disable-next-line no-useless-catch
   try {
-    // eslint-disable-line no-useless-catch
     const RECEIPT_COLLECTION = 'arquivos_redacao'
     const uploadPromises: Promise<UploadResponse>[] = []
     const receiptsFireStorePromises: PromiseFireStore[] = []
 
     fileInfos.uploads.forEach((fileInfo) => {
+      const cloneFile = structuredClone(fileInfo)
+
+      delete cloneFile.base64
+
       const storagePromise = admin
         .storage()
         .bucket()
         .upload(fileInfo.filePath, {
           metadata: {
             contentType: fileInfo.mimeType,
-            ...fileInfo
+            ...cloneFile
           }
         })
 
@@ -31,7 +35,7 @@ export const saveFileGoogleCloud: Setup = async (fileInfos) => {
       const fireStorePromise: PromiseFireStore = admin
         .firestore()
         .collection(RECEIPT_COLLECTION)
-        .add(fileInfo)
+        .add(cloneFile)
 
       receiptsFireStorePromises.push(fireStorePromise)
     })

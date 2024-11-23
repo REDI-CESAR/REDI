@@ -1,71 +1,198 @@
-import { saveFileGoogleCloud, uploadLocalFile } from '@/services'
-import express from 'express'
+import { Response } from 'express'
 import { Request } from 'firebase-functions/v2/https'
 import vision from '@google-cloud/vision'
-import Jimp from 'jimp';
-import jsQR from 'jsqr';
+import Jimp from 'jimp'
+import jsQR from 'jsqr'
+import { FileInfos } from '@/core/models'
+import { UploadResponse } from '@google-cloud/storage'
+import { DocumentData, DocumentReference } from 'firebase-admin/firestore'
+import admin from 'firebase-admin'
+import { File } from '@google-cloud/storage'
+import LocalFileUploader from '@/services/upload-file'
+// import { getAuth } from 'firebase-admin/auth'
 
-type Handler = (
-  request: Request,
-  response: express.Response
-) => void | Promise<void>
+type PromiseFireStore = Promise<DocumentReference<DocumentData>>
 
-export const handleUploadFile: Handler = async (request, response) => {
-  try {
-    response.setHeader('Access-Control-Allow-Origin', '*')
+class ImageUploader {
+  localFileUploader: LocalFileUploader
+  userToken: string
 
-    if (request.method === 'OPTIONS') {
-      response.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  constructor() {
+    this.localFileUploader = new LocalFileUploader()
+    this.userToken = ''
+  }
 
-      response.send('')
-      return
+  async saveFileGoogleCloud(fileInfos: FileInfos): Promise<File[]> {
+    // eslint-disable-line no-useless-catch
+    const RECEIPT_COLLECTION = 'arquivos_redacao'
+    const uploadPromises: Promise<UploadResponse>[] = []
+    const receiptsFireStorePromises: PromiseFireStore[] = []
+
+    fileInfos.uploads.forEach((fileInfo) => {
+      const storagePromise = admin
+        .storage()
+        .bucket()
+        .upload(fileInfo.filePath, {
+          metadata: {
+            contentType: fileInfo.mimeType,
+            ...fileInfo
+          }
+        })
+
+      uploadPromises.push(storagePromise)
+
+      const fireStorePromise: PromiseFireStore = admin
+        .firestore()
+        .collection(RECEIPT_COLLECTION)
+        .add(fileInfo)
+
+      receiptsFireStorePromises.push(fireStorePromise)
+    })
+
+    const uploadedFiles = await Promise.all(uploadPromises)
+    await Promise.all(receiptsFireStorePromises)
+
+    return uploadedFiles.map((uploadedFile) => uploadedFile[0])
+  }
+
+  verifyToken(
+    request: Request,
+    response: Response
+  ): { message?: string; status: number } {
+    if (!request.headers.authorization) {
+      response.status(403).send({
+        message: 'Token não definido'
+      })
+      return { message: 'Token não definido', status: 403 }
     }
 
-    const fileInfos = await uploadLocalFile(request)
+    this.userToken = request.headers.authorization!
+    // const userRecord = getAuth()
+    //   .verifyIdToken(this.userToken, true)
+    //   .then(() => {
+    //     return getAuth().getUser(request.body)
+    //   })
+    //   .catch(() => {
+    //     return null
+    //   })
 
-    for (const uploads of fileInfos.uploads) {
-      const image = await Jimp.read(uploads.filePath);
+    // if (userRecord === null) {
+    //   return { message: 'Token expirado', status: 401 }
+    // }
 
-        // Get the image data
+    if (!this.userToken) {
+      response.status(403).send({
+        message: 'Token não definido'
+      })
+      return { message: 'Token não definido', status: 403 }
+    }
+
+    if (this.userToken.length === 0) {
+      response.status(403).send({
+        message: 'Token vazio'
+      })
+      return { message: 'Token vazio', status: 403 }
+    }
+
+    return { status: 200 }
+  }
+
+  async handleUploadFile(request: Request, response: Response) {
+    try {
+      // const { status, message } = this.verifyToken(request, response)
+      // if (status !== 200) {
+      //   response.status(status).send({
+      //     message
+      //   })
+      //   return
+      // }
+
+      const fileInfos: FileInfos =
+        await this.localFileUploader.uploadLocalFile(request)
+      let qrcodeInfo = ''
+
+      for (const uploads of fileInfos.uploads) {
+        // uploads.filePath =
+        //   'uploads/5262dd65-74e5-49e1-8deb-094e03003184_redacao-valida-qrcode.jpeg'
+
+        // 7eb59535-a27a-493d-9302-88c7a0291d1d_exemplo_texto_1_linha.jpeg
+        // 02a20573-b054-4009-a1af-8c27b68a1345_exemplo_texto_32_linhas.jpeg
+
+        const image: any = await Jimp.read(uploads.filePath)
+
         const imageData = {
-            data: new Uint8ClampedArray(image.bitmap.data),
-            width: image.bitmap.width,
-            height: image.bitmap.height,
-        };
-
-        // Use jsQR to decode the QR code
-        const decodedQR = jsQR(imageData.data, imageData.width, imageData.height);
-
-        if (!decodedQR) {
-            throw new Error('QR code not found in the image.');
+          data: new Uint8ClampedArray(image.bitmap.data),
+          width: image.bitmap.width,
+          height: image.bitmap.height
         }
 
-        console.log('DADOS DO QRCODE:', decodedQR.data);
+        const decodedQR = jsQR(
+          imageData.data,
+          imageData.width,
+          imageData.height
+        )
+
+        if (!decodedQR) {
+          response.status(400).send({
+            message: 'QRCode não encontrado'
+          })
+          return
+        }
+
+        qrcodeInfo = decodedQR.data
+      }
+
+      const cloudFiles = await this.saveFileGoogleCloud(fileInfos)
+
+      const client = new vision.ImageAnnotatorClient()
+
+      for (const cloudFile of cloudFiles) {
+        const imageBucket = `gs://${cloudFile?.metadata.bucket}/${cloudFile?.metadata.name}`
+        // const imageBucket = `gs://${cloudFile?.metadata.bucket}/redacao-vazia.jpeg`
+        // const imageBucket = `gs://${cloudFile?.metadata.bucket}/5262dd65-74e5-49e1-8deb-094e03003184_redacao-valida-qrcode.jpeg`
+        // const imageBucket = `gs://${cloudFile?.metadata.bucket}/redacao-refael-exemplo.png`
+
+        // NOTE: REGEX INICAL (testar) para pegar o conteúdo da redacao
+        ///[aá]rea de (.*)\: [\s\S]<?texto_redacao>(.*)[\s\S](caed|nees|brasil)/gi
+
+        const [result] = await client.textDetection(imageBucket)
+
+        const text = result.fullTextAnnotation?.text
+        if (text?.length === 0 || text === undefined) {
+          response.status(400).send({
+            message: 'Redação vazia'
+          })
+          return
+        }
+
+        const lines = text ? text?.split('\n') : []
+        if (lines.length < 5) {
+          response.status(400).send({
+            message: 'Redação com menos de 5 linhas'
+          })
+          return
+        } else if (lines.length > 35) {
+          response.status(400).send({
+            message: 'Redação com mais de 35 linhas'
+          })
+          return
+        }
+      }
+
+      const qrcodeInfoSpplited = qrcodeInfo?.split(';')
+
+      response.send({
+        files: cloudFiles,
+        qrcodeInfo: {
+          school: qrcodeInfoSpplited[0],
+          question: qrcodeInfoSpplited[1],
+          student: qrcodeInfoSpplited[2]
+        }
+      })
+    } catch (error) {
+      console.log('eerrr', error)
     }
-
-    const cloudFiles = await saveFileGoogleCloud(fileInfos)
-
-    const client = new vision.ImageAnnotatorClient()
-
-    for (const cloudFile of cloudFiles) {
-      // const imageBucket = `gs://${cloudFile?.metadata.bucket}/${cloudFile?.metadata.name}`
-      // const imageBucket = `gs://${cloudFile?.metadata.bucket}/redacao-vazia.jpeg`
-      // const imageBucket = `gs://${cloudFile?.metadata.bucket}/redacao-preenchida.jpeg`
-      const imageBucket = `gs://${cloudFile?.metadata.bucket}/redacao-refael-exemplo.png`
-
-      // NOTE: REGEX INICAL (testar) para pegar o conteúdo da redacao
-      ///[aá]rea de (.*)\: [\s\S]<?texto_redacao>(.*)[\s\S](caed|nees|brasil)/gi
-
-      const [result] = await client.textDetection(imageBucket)
-
-      console.log('result', result.fullTextAnnotation?.text)
-    }
-
-    response.send(cloudFiles)
-  } catch (error) {
-    console.log('HENRIQUE', error)
-    // logger.error('Error processing receipt', { error });
-
-    response.status(500).send('Failed to process receipt')
   }
 }
+
+export default ImageUploader

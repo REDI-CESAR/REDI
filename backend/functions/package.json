@@ -22,19 +22,29 @@
   "description": "",
   "dependencies": {
     "@google-cloud/firestore": "^7.9.0",
-    "@google-cloud/vision": "^4.3.0",
+    "@google-cloud/vision": "^4.3.2",
+    "@smodin/fast-text-language-detection": "^0.2.3",
+    "axios": "^1.7.7",
     "busboy": "^1.6.0",
     "firebase": "^10.13.1",
     "firebase-admin": "^12.3.1",
     "firebase-functions": "^5.0.1",
+    "langdetect": "^0.2.1",
     "jimp": "^0.22.10",
     "jsqr": "1.4.0",
     "module-alias": "^2.2.3"
   },
   "devDependencies": {
     "@types/busboy": "^1.5.4",
+    "@types/langdetect": "^0.2.2",
     "@types/module-alias": "^2.0.4",
-    "@types/node": "^22.1.0",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-prettier": "^5.2.1",
+    "prettier": "^3.3.3",
     "typescript": "^5.5.4"
   }
 }
