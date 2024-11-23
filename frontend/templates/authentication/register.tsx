@@ -14,6 +14,8 @@ import { auth } from '@/platform/core/services'
 import { useRouter } from 'expo-router'
 import { EmailValidator } from '@/utils/email-validator'
 import { PasswordValidator } from '@/utils/password-validator'
+import { FirebaseError } from 'firebase/app'
+import { FirebaseErrorCode } from '@/utils/firebase-error'
 
 type SignupDto = {
   email: string
@@ -39,12 +41,20 @@ const RegisterScreen = () => {
         return
       }
 
-      const user = await createUserWithEmailAndPassword(auth, email, password)
+      await createUserWithEmailAndPassword(auth, email, password)
 
       router.replace('home')
     } catch (error) {
-      console.log('error', error)
-      throw error
+      if (error instanceof FirebaseError) {
+        const errorFirebase = error as FirebaseError
+
+        if (errorFirebase.code === FirebaseErrorCode.emailInUse) {
+          Alert.alert('Email existente')
+          return
+        }
+      }
+
+      Alert.alert('Falha ao registrar usuário')
     }
   }
 

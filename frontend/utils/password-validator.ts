@@ -21,15 +21,15 @@ export class PasswordValidator {
         result.messages.push('Senha deve conter 6 caracteres')
       }
 
-      if (!/[A-Z]/g.test(password)) {
-        result.isValid = false
-        result.messages.push('Senha deve conter 1 letra maiscula')
-      }
+      // if (!/[A-Z]/g.test(password)) {
+      //   result.isValid = false
+      //   result.messages.push('Senha deve conter 1 letra maiscula')
+      // }
 
-      if (!/[a-z]/g.test(password)) {
-        result.isValid = false
-        result.messages.push('Senha deve conter 1 letra minuscula')
-      }
+      // if (!/[a-z]/g.test(password)) {
+      //   result.isValid = false
+      //   result.messages.push('Senha deve conter 1 letra minuscula')
+      // }
 
       return result
     } catch (error) {

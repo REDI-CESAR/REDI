@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router'
 import { EmailValidator } from '@/utils/email-validator'
 import { FirebaseError } from 'firebase/app'
 import { PasswordValidator } from '@/utils/password-validator'
+import { FirebaseErrorCode } from '@/utils/firebase-error'
 
 type SignupDto = {
   email: string
@@ -58,11 +59,6 @@ const LoginScreen = () => {
     } catch (error: unknown) {
       if (error instanceof FirebaseError) {
         const errorFirebase = error as FirebaseError
-
-        enum FirebaseErrorCode {
-          invalidCredentials = 'auth/invalid-login-credentials',
-          invalidEmail = 'auth/invalid-email'
-        }
 
         if (errorFirebase.code === FirebaseErrorCode.invalidCredentials) {
           Alert.alert('Credenciais inválidas')
