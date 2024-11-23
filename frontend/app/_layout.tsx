@@ -38,8 +38,9 @@ export default function RootLayout() {
         <View style={styles.content}>
           <Stack screenOptions={{ title: 'REDI - Redação Digital' }}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="home" />
+            <Stack.Screen name="home" options={{ headerShown: false }} />
             <Stack.Screen name="register" />
+            <Stack.Screen name="forgotpassword" />
             <Stack.Screen name="scanner" />
             <Stack.Screen name="+not-found" />
           </Stack>

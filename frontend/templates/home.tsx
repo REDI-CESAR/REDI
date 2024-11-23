@@ -11,12 +11,8 @@ const HomeScreen = () => {
     try {
       const result = await signOut(auth)
 
-      console.log('result LOGOUT', result)
-
       router.push('/(tabs)')
     } catch (error) {
-      console.log('error LOGOUT', error)
-
       Alert.alert('Error ao deslogar')
     }
   }
@@ -24,13 +20,13 @@ const HomeScreen = () => {
   return (
     <View style={styles.wrapper}>
       <View style={styles.header}>
-        <Text>HEADER</Text>
+        <Text style={styles.title}>Bem vindo ao REDI - Redação Digital</Text>
       </View>
       <View style={styles.content}>
         <View style={styles.buttonWrapper}>
           <TouchableOpacity
             style={styles.button}
-            onPress={() => router.push('scanner')}
+            onPress={() => router.push('/scanner')}
           >
             <Text style={styles.buttonText}>Scanner</Text>
           </TouchableOpacity>
@@ -40,9 +36,7 @@ const HomeScreen = () => {
           </TouchableOpacity>
         </View>
       </View>
-      <View style={styles.footer}>
-        <Text>FOOTER</Text>
-      </View>
+      <View style={styles.footer}>{/* <Text>FOOTER</Text> */}</View>
     </View>
   )
 }
@@ -52,10 +46,14 @@ export default HomeScreen
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
+    marginTop: 24,
     justifyContent: 'center',
     paddingTop: 24,
     paddingHorizontal: 24,
     rowGap: 16
+  },
+  title: {
+    fontSize: 18
   },
   header: {
     alignSelf: 'center'

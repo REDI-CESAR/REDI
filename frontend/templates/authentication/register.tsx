@@ -43,7 +43,7 @@ const RegisterScreen = () => {
 
       await createUserWithEmailAndPassword(auth, email, password)
 
-      router.replace('home')
+      router.replace('/home')
     } catch (error) {
       if (error instanceof FirebaseError) {
         const errorFirebase = error as FirebaseError
@@ -90,13 +90,13 @@ const RegisterScreen = () => {
     <View style={styles.wrapper}>
       <View style={styles.formWrapper}>
         <View style={styles.formHeader}>
-          <Text>RegisterScreen</Text>
+          <Text>Cadastro de Usuário</Text>
         </View>
 
         <View style={styles.formContent}>
           <TextInput
             style={styles.input}
-            placeholder="email"
+            placeholder="Digite seu email"
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
@@ -105,7 +105,7 @@ const RegisterScreen = () => {
 
           <TextInput
             style={styles.input}
-            placeholder="password"
+            placeholder="Digite sua senha"
             secureTextEntry
             autoCapitalize="none"
             value={password}

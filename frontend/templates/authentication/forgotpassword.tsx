@@ -18,19 +18,33 @@ const ForgotPasswordScreen = () => {
   const router = useRouter()
 
   async function forgotPassword(email: string) {
+    setLoading(true)
     try {
       if (!EmailValidator.isValid(email)) {
         Alert.alert('Email inválido')
         return
       }
 
-      const user = await sendPasswordResetEmail(auth, email)
+      await sendPasswordResetEmail(auth, email)
 
-      router.replace('/(tabs)')
+      setLoading(false)
 
-      console.log('RESPONSE USER FIREBASE', user)
+      // Trigger the alert
+      Alert.alert(
+        'Email enviado',
+        'Um email foi enviado com um link para recuperar a senha.',
+        [
+          {
+            text: 'Ok',
+            onPress: () => router.replace('/(tabs)')
+          }
+        ],
+        { cancelable: true }
+      )
     } catch (error) {
-      throw error
+      Alert.alert('Erro ao recuperar a senha')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -38,7 +52,7 @@ const ForgotPasswordScreen = () => {
     setLoading(true)
 
     try {
-      const user = await forgotPassword(email)
+      await forgotPassword(email)
     } catch (error) {
       Alert.alert('Não foi possível resetar a senha')
     } finally {
@@ -50,13 +64,13 @@ const ForgotPasswordScreen = () => {
     <View style={styles.wrapper}>
       <View style={styles.formWrapper}>
         <View style={styles.formHeader}>
-          <Text>ForgotPassword</Text>
+          <Text>Recuperação de senha</Text>
         </View>
 
         <View style={styles.formContent}>
           <TextInput
             style={styles.input}
-            placeholder="email"
+            placeholder="Digite seu email para recuperar a senha"
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
@@ -82,8 +96,6 @@ export default ForgotPasswordScreen
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     paddingTop: 24,
     paddingHorizontal: 24
   },
@@ -96,7 +108,6 @@ const styles = StyleSheet.create({
   },
   formHeader: {},
   formContent: {
-    flex: 1,
     rowGap: 8
   },
   formFooter: {},

@@ -28,7 +28,7 @@ const LoginScreen = () => {
   const router = useRouter()
 
   function handleForgotPassword() {
-    router.push('forgotpassword')
+    router.push('/forgotpassword')
   }
 
   async function handleSignin() {
@@ -45,17 +45,9 @@ const LoginScreen = () => {
         return
       }
 
-      // const passwordValidations = PasswordValidator.isValid(password)
-      // if (!passwordValidations.isValid) {
-      //   Alert.alert(passwordValidations.messages[0])
-      //   return
-      // }
-
       const user = await signInWithEmailAndPassword(auth, email, password)
 
-      router.replace('home')
-
-      console.log('RESPONSE USER FIREBASE', user)
+      router.replace('/home')
     } catch (error: unknown) {
       if (error instanceof FirebaseError) {
         const errorFirebase = error as FirebaseError
@@ -74,7 +66,7 @@ const LoginScreen = () => {
   }
 
   function goToSignup() {
-    router.push('register')
+    router.push('/register')
   }
 
   if (loading) {
@@ -200,7 +192,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center'
   },
-  forgotPassowordWrapper: {},
+  forgotPassowordWrapper: {
+    marginTop: 12
+  },
   forgotPassowordButton: {},
   forgotPassowordLink: {},
   buttonText: {
