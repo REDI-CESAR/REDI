@@ -9,6 +9,8 @@ import { DocumentData, DocumentReference } from 'firebase-admin/firestore'
 import admin from 'firebase-admin'
 import { File } from '@google-cloud/storage'
 import LocalFileUploader from '@/services/upload-file'
+const QrCodeReader = require('qrcode-reader')
+
 // import { getAuth } from 'firebase-admin/auth'
 
 type PromiseFireStore = Promise<DocumentReference<DocumentData>>
@@ -20,6 +22,24 @@ class ImageUploader {
   constructor() {
     this.localFileUploader = new LocalFileUploader()
     this.userToken = ''
+  }
+
+  // Function to decode QR code and return a Promise
+  decodeQRCode = (image: any) => {
+    return new Promise((resolve, reject) => {
+      const qrCodeInstance = new QrCodeReader()
+
+      // Set the callback to resolve or reject the promise
+      qrCodeInstance.callback = (err: any, value: any) => {
+        if (err) {
+          return reject(err)
+        }
+        resolve(value.result)
+      }
+
+      // Decode the QR code
+      qrCodeInstance.decode(image.bitmap)
+    })
   }
 
   async saveFileGoogleCloud(fileInfos: FileInfos): Promise<File[]> {
@@ -112,12 +132,6 @@ class ImageUploader {
       let qrcodeInfo = ''
 
       for (const uploads of fileInfos.uploads) {
-        // uploads.filePath =
-        //   'uploads/5262dd65-74e5-49e1-8deb-094e03003184_redacao-valida-qrcode.jpeg'
-
-        // 7eb59535-a27a-493d-9302-88c7a0291d1d_exemplo_texto_1_linha.jpeg
-        // 02a20573-b054-4009-a1af-8c27b68a1345_exemplo_texto_32_linhas.jpeg
-
         const image: any = await Jimp.read(uploads.filePath)
 
         const imageData = {
@@ -132,14 +146,16 @@ class ImageUploader {
           imageData.height
         )
 
-        if (!decodedQR) {
+        const qrCode = (await this.decodeQRCode(image)) as string
+
+        qrcodeInfo = qrCode || decodedQR?.data!
+
+        if (!qrcodeInfo) {
           response.status(400).send({
             message: 'QRCode não encontrado'
           })
           return
         }
-
-        qrcodeInfo = decodedQR.data
       }
 
       const cloudFiles = await this.saveFileGoogleCloud(fileInfos)
@@ -158,6 +174,7 @@ class ImageUploader {
         const [result] = await client.textDetection(imageBucket)
 
         const text = result.fullTextAnnotation?.text
+
         if (text?.length === 0 || text === undefined) {
           response.status(400).send({
             message: 'Redação vazia'
