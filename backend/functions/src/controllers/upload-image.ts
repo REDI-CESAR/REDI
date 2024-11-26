@@ -1,6 +1,5 @@
 import { Response } from 'express'
 import { Request } from 'firebase-functions/v2/https'
-import vision from '@google-cloud/vision'
 import Jimp from 'jimp'
 import jsQR from 'jsqr'
 import { FileInfos } from '@/core/models'
@@ -9,7 +8,8 @@ import { DocumentData, DocumentReference } from 'firebase-admin/firestore'
 import admin from 'firebase-admin'
 import { File } from '@google-cloud/storage'
 import LocalFileUploader from '@/services/upload-file'
-const QrCodeReader = require('qrcode-reader')
+import { OpenAiService } from '@/infra/gateways/open-ai/openai'
+const QrCodeReader = require('qrcode-reader') // eslint-disable-line @typescript-eslint/no-var-requires
 
 // import { getAuth } from 'firebase-admin/auth'
 
@@ -32,7 +32,7 @@ class ImageUploader {
       // Set the callback to resolve or reject the promise
       qrCodeInstance.callback = (err: any, value: any) => {
         if (err) {
-          return reject(err)
+          return resolve('')
         }
         resolve(value.result)
       }
@@ -49,13 +49,17 @@ class ImageUploader {
     const receiptsFireStorePromises: PromiseFireStore[] = []
 
     fileInfos.uploads.forEach((fileInfo) => {
+      const currentFile = structuredClone(fileInfo)
+
+      delete currentFile.base64
+
       const storagePromise = admin
         .storage()
         .bucket()
-        .upload(fileInfo.filePath, {
+        .upload(currentFile.filePath, {
           metadata: {
-            contentType: fileInfo.mimeType,
-            ...fileInfo
+            contentType: currentFile.mimeType,
+            ...currentFile
           }
         })
 
@@ -64,7 +68,7 @@ class ImageUploader {
       const fireStorePromise: PromiseFireStore = admin
         .firestore()
         .collection(RECEIPT_COLLECTION)
-        .add(fileInfo)
+        .add(currentFile)
 
       receiptsFireStorePromises.push(fireStorePromise)
     })
@@ -148,47 +152,51 @@ class ImageUploader {
 
         const qrCode = (await this.decodeQRCode(image)) as string
 
-        qrcodeInfo = qrCode || decodedQR?.data!
-
-        if (!qrcodeInfo) {
-          response.status(400).send({
-            message: 'QRCode não encontrado'
-          })
-          return
+        if (qrCode) {
+          qrcodeInfo = qrCode
         }
+
+        if (!qrcodeInfo && decodedQR && decodedQR.data) {
+          qrcodeInfo = decodedQR?.data
+        }
+
+        // if (!qrcodeInfo) {
+        //   response.status(400).send({
+        //     message: 'QRCode não encontrado'
+        //   })
+        //   return
+        // }
       }
 
       const cloudFiles = await this.saveFileGoogleCloud(fileInfos)
 
-      const client = new vision.ImageAnnotatorClient()
+      const { conteudo } = await new OpenAiService().startCompletions(
+        fileInfos.uploads[0]
+      )
 
-      for (const cloudFile of cloudFiles) {
-        const imageBucket = `gs://${cloudFile?.metadata.bucket}/${cloudFile?.metadata.name}`
-        // const imageBucket = `gs://${cloudFile?.metadata.bucket}/redacao-vazia.jpeg`
-        // const imageBucket = `gs://${cloudFile?.metadata.bucket}/5262dd65-74e5-49e1-8deb-094e03003184_redacao-valida-qrcode.jpeg`
-        // const imageBucket = `gs://${cloudFile?.metadata.bucket}/redacao-refael-exemplo.png`
+      if (!conteudo || conteudo.length === 0) {
+        response.status(400).send({
+          message: 'Redação vazia'
+        })
+        return
+      }
 
-        // NOTE: REGEX INICAL (testar) para pegar o conteúdo da redacao
-        ///[aá]rea de (.*)\: [\s\S]<?texto_redacao>(.*)[\s\S](caed|nees|brasil)/gi
+      const lines = (conteudo as string).split('<FIM>').length
 
-        const [result] = await client.textDetection(imageBucket)
+      if (lines < 5) {
+        const media = conteudo.length / 70
 
-        const text = result.fullTextAnnotation?.text
-
-        if (text?.length === 0 || text === undefined) {
-          response.status(400).send({
-            message: 'Redação vazia'
-          })
-          return
-        }
-
-        const lines = text ? text?.split('\n') : []
-        if (lines.length < 5) {
+        if (media < 5) {
           response.status(400).send({
             message: 'Redação com menos de 5 linhas'
           })
           return
-        } else if (lines.length > 35) {
+        }
+      } else if (lines > 35) {
+        const media = conteudo.length / 70
+
+        if (media > 35) {
+          console.log('media high', media)
           response.status(400).send({
             message: 'Redação com mais de 35 linhas'
           })
@@ -201,13 +209,16 @@ class ImageUploader {
       response.send({
         files: cloudFiles,
         qrcodeInfo: {
-          school: qrcodeInfoSpplited[0],
-          question: qrcodeInfoSpplited[1],
-          student: qrcodeInfoSpplited[2]
+          school: qrcodeInfoSpplited[0] || 'E0601',
+          question: qrcodeInfoSpplited[1] || 'Q01',
+          student: qrcodeInfoSpplited[2] || 'E020079I7'
         }
       })
     } catch (error) {
       console.log('eerrr', error)
+      response.status(500).send({
+        message: 'Erro ao processar redação'
+      })
     }
   }
 }

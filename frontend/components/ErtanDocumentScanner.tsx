@@ -151,10 +151,11 @@ export default function ErtanDocumentScanner() {
           )
         ) : (
           <View style={{ flex: 1 }}>
-            <Image
+            {/* <Image
               source={require('../assets/images/empty-page.jpeg')}
               style={styles.preview}
-            />
+            /> */}
+            <></>
           </View>
         )}
       </View>

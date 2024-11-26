@@ -61,10 +61,10 @@ class LocalFileUploader {
       busboyInstance.on('finish', async () => {
         await Promise.all(fileWrites)
 
-        // for (const file of uploads) {
-        //   // file.base64 = fs.readFileSync(file.filePath, { encoding: 'base64' })
-        //   // fs.unlinkSync(file.filePath);
-        // }
+        for (const file of uploads) {
+          file.base64 = fs.readFileSync(file.filePath, { encoding: 'base64' })
+          // fs.unlinkSync(file.filePath);
+        }
 
         resolve({ uploads, fields })
       })
