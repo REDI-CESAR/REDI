@@ -8,7 +8,7 @@ import {
   Image,
   Alert
 } from 'react-native'
-import Permissions from 'react-native-permissions'
+import * as Permissions from 'expo-permissions'
 
 import DocumentScanner from '@ertan95/react-native-document-scanner'
 import { useEffect, useRef, useState } from 'react'
@@ -84,11 +84,7 @@ export default function ErtanDocumentScanner() {
 
   useEffect(() => {
     async function requestCamera() {
-      const result = await Permissions.request(
-        Platform.OS === 'android'
-          ? 'android.permission.CAMERA'
-          : 'ios.permission.CAMERA'
-      )
+      const result = await Permissions.askAsync(Permissions.CAMERA)
       if (result === 'granted') setAllowed(true)
     }
     requestCamera()
