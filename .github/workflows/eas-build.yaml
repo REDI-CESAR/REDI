@@ -1,7 +1,9 @@
 name: EAS Builds
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'feat/*'
 
 jobs:
   eas-build:
