@@ -9,6 +9,10 @@ jobs:
   eas-build:
     name: Trigger EAS build for development-sim
     timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ./frontend
+
     runs-on: ubuntu-latest
     steps:
       - name: 🏗 Setup repository
