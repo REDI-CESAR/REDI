@@ -3,4 +3,6 @@ appId: com.anonymous.redimobile
 - launchApp:
     clearState: true
 
-- assertVisible: "Open up App.js to start working on your app!"
+- runFlow: ../login/login-valido.yaml
+
+- tapOn: Scanner

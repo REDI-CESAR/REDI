@@ -1,0 +1,13 @@
+appId: com.anonymous.redimobile
+---
+- launchApp:
+    clearState: true
+- tapOn: "Esqueci minha senha"
+- assertVisible: "Recuperação de senha"
+- tapOn: "Digite seu email para recuperar a senha"
+- inputRandomEmail
+- tapOn: Resetar senha
+- assertVisible: Email enviado
+- assertVisible: Um email foi enviado com um link para recuperar a senha.
+- tapOn: OK
+---

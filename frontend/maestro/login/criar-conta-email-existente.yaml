@@ -1,0 +1,13 @@
+appId: com.anonymous.redimobile
+---
+- launchApp:
+    clearState: true
+- tapOn: Criar conta
+- tapOn: Digite seu email
+- inputText: "henrique.cunha@corpus.inf.br"
+- tapOn: Digite sua senha
+- inputText: "123456"
+- tapOn: Criar Conta
+
+- assertVisible: "Email Existente"
+---
