@@ -1,0 +1,12 @@
+appId: com.anonymous.redimobile
+---
+- launchApp:
+    clearState: true
+- tapOn: Digite seu email
+- inputText: "henrique.cunha@corpus.inf.br"
+- tapOn: Digite sua senha
+- inputText: "123456"
+- tapOn: Login
+
+- assertVisible: "Scanner"
+---

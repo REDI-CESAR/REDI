@@ -1,0 +1,13 @@
+appId: com.anonymous.redimobile
+---
+- launchApp:
+    clearState: true
+- tapOn: "Digite seu email"
+- "inputRandomEmail"
+- tapOn: "Digite sua senha"
+- inputText: ""
+- inputText: "123456"
+- tapOn: "Login"
+- assertVisible: "Credenciais inválidas"
+- tapOn: "OK"
+---

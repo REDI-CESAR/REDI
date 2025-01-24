@@ -1,0 +1,13 @@
+appId: com.anonymous.redimobile
+---
+- launchApp:
+    clearState: true
+- tapOn: Criar conta
+- tapOn: Digite seu email
+- inputRandomEmail
+- tapOn: Digite sua senha
+- inputText: "123456"
+- tapOn: Criar Conta
+
+- assertVisible: "Bem vindo ao REDI - Redação Digital"
+---

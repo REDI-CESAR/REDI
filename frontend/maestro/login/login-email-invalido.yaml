@@ -1,0 +1,7 @@
+appId: com.anonymous.redimobile
+---
+- launchApp:
+    clearState: true
+- tapOn: Login
+
+- assertVisible: "Email inválido"
