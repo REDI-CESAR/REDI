@@ -18,10 +18,12 @@ type PromiseFireStore = Promise<DocumentReference<DocumentData>>
 class ImageUploader {
   localFileUploader: LocalFileUploader
   userToken: string
+  openAiService: OpenAiService
 
   constructor() {
     this.localFileUploader = new LocalFileUploader()
     this.userToken = ''
+    this.openAiService = new OpenAiService()
   }
 
   // Function to decode QR code and return a Promise
@@ -159,18 +161,11 @@ class ImageUploader {
         if (!qrcodeInfo && decodedQR && decodedQR.data) {
           qrcodeInfo = decodedQR?.data
         }
-
-        // if (!qrcodeInfo) {
-        //   response.status(400).send({
-        //     message: 'QRCode não encontrado'
-        //   })
-        //   return
-        // }
       }
 
       const cloudFiles = await this.saveFileGoogleCloud(fileInfos)
 
-      const { conteudo } = await new OpenAiService().startCompletions(
+      const { conteudo } = await this.openAiService.startCompletions(
         fileInfos.uploads[0]
       )
 
@@ -193,15 +188,10 @@ class ImageUploader {
           return
         }
       } else if (lines > 35) {
-        const media = conteudo.length / 70
-
-        if (media > 35) {
-          console.log('media high', media)
-          response.status(400).send({
-            message: 'Redação com mais de 35 linhas'
-          })
-          return
-        }
+        response.status(400).send({
+          message: 'Redação com mais de 35 linhas'
+        })
+        return
       }
 
       const qrcodeInfoSpplited = qrcodeInfo?.split(';')
@@ -215,7 +205,6 @@ class ImageUploader {
         }
       })
     } catch (error) {
-      console.log('eerrr', error)
       response.status(500).send({
         message: 'Erro ao processar redação'
       })

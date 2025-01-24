@@ -34,3 +34,4 @@ export const uploadImage = onRequest(
   { cors: true },
   imageUploader.handleUploadFile.bind(imageUploader)
 )
+
